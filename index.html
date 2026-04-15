@@ -9,7 +9,44 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="container">
+        <header class="header">
+          <h1 class="title">TV Show Episode Guide</h1>
+          <div class="input-container">
+            <input
+              type="text"
+              id="input-box"
+              placeholder="Search Season / Episode"
+            />
+            <span class="search-icon"
+              ><i class="fa-solid fa-magnifying-glass"></i
+            ></span>
+          </div>
+        </header>
+
+        <main id="episodes-list"></main>
+
+        <template id="episode-container">
+          <div class="episode-card">
+            <div class="episode-image">
+              <img
+                src="https://placehold.co/400x225/1f2937/ffffff?text=Episode+1"
+              />
+            </div>
+            <p class="season-episode">Season 1, Episode 1</p>
+            <h3 class="episode-title"></h3>
+            <p class="episode-info"></p>
+            <a href="#" class="read-more">Read more</a>
+          </div>
+        </template>
+
+        <footer class="footer">
+          <p>Made by CYF Trainees</p>
+          <p>The data has originally come from "https://tvmaze.com"</p>
+        </footer>
+      </div>
+    </div>
 
     <!-- Loads a provided function called getAllEpisodes() which returns all episodes -->
     <script src="episodes.js"></script>
