@@ -210,3 +210,14 @@ body {
     padding: 14px;
   }
 }
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+#select {
+  padding: 8px;
+  border-radius: 6px;
+}
