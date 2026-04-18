@@ -1,66 +1,125 @@
-// ===> Touch your html elements <===//
-const searchInput = document.getElementById("input-box");
-const episodeList = document.getElementById("episodes-list");
-const select = document.getElementById("select");
-const count = document.getElementById("count");
-
-// ===> make accessible variable for all episodes;
-let allEpisodes = [];
-
-// ===> STATE
+// === STATE ===
 const state = {
+  shows: [],
+  episodes: [],
   searchTerm: "",
   selectTerm: "",
+  showId: "",
 };
 
-// ===> function for rendering episodes; (UNCHANGED)
-function renderEpisode(episode) {
-  const episodeContainer = document
-    .getElementById("episode-container")
-    .content.cloneNode(true);
+// === SETUP ===
+window.onload = setup;
 
-  const card = episodeContainer.querySelector(".episode-card");
+async function setup() {
+  document.getElementById("root").style.display = "none";
 
-  card.querySelector(".episode-image img").src =
-    episode.image?.medium ||
-    "https://placehold.co/400x225/1f2937/ffffff?text=No+Image";
+  try {
+    const res = await fetch("https://api.tvmaze.com/shows");
+    const data = await res.json();
 
-  card.querySelector(".season-episode").textContent =
-    `S${String(episode.season).padStart(2, "0")}E${String(
-      episode.number,
-    ).padStart(2, "0")}`;
+    state.shows = data;
 
-  card.querySelector(".episode-title").textContent = episode.name;
+    populateShowList();
+    showRender();
+  } catch (e) {
+    console.error("Error loading shows:", e);
+  }
 
-  const summary = card.querySelector(".episode-info");
-  summary.innerHTML = episode.summary || "No summary available";
-  summary.classList.add("hidden");
-
-  const readMore = card.querySelector(".read-more");
-
-  readMore.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    summary.classList.toggle("hidden");
-    readMore.textContent = summary.classList.contains("hidden")
-      ? "Read more"
-      : "Show less";
+  // === EVENTS ===
+  document.getElementById("search").addEventListener("input", (e) => {
+    state.searchTerm = e.target.value;
+    render();
   });
 
-  episodeList.appendChild(episodeContainer);
+  document.getElementById("select").addEventListener("change", (e) => {
+    state.selectTerm = e.target.value;
+    render();
+  });
+
+  document.getElementById("show-list").addEventListener("change", (e) => {
+    const value = e.target.value;
+
+    if (value === "") {
+      showRender();
+      return;
+    }
+
+    const filtered = state.shows.filter((s) =>
+      s.name.toLowerCase().includes(value.toLowerCase()),
+    );
+
+    renderFilteredShows(filtered);
+  });
 }
 
-// ===> FILTER FUNCTION
+// === FETCH EPISODES ===
+async function fetchEpisodes(showId) {
+  try {
+    const res = await fetch(`https://api.tvmaze.com/shows/${showId}/episodes`);
+    const data = await res.json();
+
+    state.episodes = data;
+    state.searchTerm = "";
+    state.selectTerm = "";
+
+    populateEpisodeList();
+    render();
+  } catch (e) {
+    console.error("Error loading episodes:", e);
+  }
+}
+
+// === SHOW CARD ===
+function createShowCard(show) {
+  const template = document.getElementById("film-card").content.cloneNode(true);
+
+  const card = template.querySelector(".card");
+
+  card.querySelector("h3").textContent = show.name;
+  card.querySelector("img").src =
+    show.image?.medium || "https://placehold.co/400x225";
+  card.querySelector("p").innerHTML = show.summary || "No summary";
+
+  card.addEventListener("click", () => {
+    state.showId = show.id;
+
+    document.getElementById("show-container").style.display = "none";
+    document.getElementById("root").style.display = "grid";
+
+    fetchEpisodes(show.id);
+  });
+
+  return card;
+}
+
+// === EPISODE CARD ===
+function createEpisodeCard(ep) {
+  const template = document.getElementById("film-card").content.cloneNode(true);
+
+  template.querySelector("h3").textContent =
+    `${ep.name} - S${String(ep.season).padStart(2, "0")}E${String(
+      ep.number,
+    ).padStart(2, "0")}`;
+
+  template.querySelector("img").src =
+    ep.image?.medium || "https://placehold.co/400x225";
+
+  template.querySelector("p").innerHTML = ep.summary || "No summary";
+
+  return template;
+}
+
+// === FILTER ===
 function getFilteredEpisodes() {
-  return allEpisodes.filter((episode) => {
-    const code = `S${String(episode.season).padStart(2, "0")}E${String(
-      episode.number,
-    ).padStart(2, "0")}-${episode.name}`;
+  return state.episodes.filter((ep) => {
+    const code = `S${String(ep.season).padStart(2, "0")}E${String(
+      ep.number,
+    ).padStart(2, "0")}-${ep.name}`;
 
     const searchMatch =
-      episode.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-      (episode.summary &&
-        episode.summary.toLowerCase().includes(state.searchTerm.toLowerCase()));
+      ep.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+      (ep.summary &&
+        ep.summary.toLowerCase().includes(state.searchTerm.toLowerCase()));
 
     const selectMatch = state.selectTerm === "" || state.selectTerm === code;
 
@@ -68,53 +127,77 @@ function getFilteredEpisodes() {
   });
 }
 
-// ===> RENDER FUNCTION
+// === RENDER EPISODES ===
 function render() {
-  episodeList.innerHTML = "";
+  const root = document.getElementById("root");
+  root.innerHTML = "";
 
-  const filteredEpisodes = getFilteredEpisodes();
+  const filtered = getFilteredEpisodes();
 
-  filteredEpisodes.forEach(renderEpisode);
+  filtered.forEach((ep) => {
+    root.appendChild(createEpisodeCard(ep));
+  });
 
-  // ✅ DISPLAY COUNT
-  count.textContent = `Displaying ${filteredEpisodes.length} / ${allEpisodes.length} episodes`;
+  displayCount(filtered.length, state.episodes.length);
 }
 
-// ===> POPULATE DROPDOWN
-function populateSelect() {
-  select.innerHTML = `<option value="">All Episodes</option>`;
+// === RENDER SHOWS ===
+function showRender() {
+  const container = document.getElementById("show-container");
+  container.innerHTML = "";
 
-  allEpisodes.forEach((episode) => {
-    const code = `S${String(episode.season).padStart(2, "0")}E${String(
-      episode.number,
-    ).padStart(2, "0")}-${episode.name}`;
+  const sorted = [...state.shows].sort((a, b) => a.name.localeCompare(b.name));
 
+  sorted.forEach((show) => {
+    container.appendChild(createShowCard(show));
+  });
+}
+
+// === FILTERED SHOW RENDER ===
+function renderFilteredShows(shows) {
+  const container = document.getElementById("show-container");
+  container.innerHTML = "";
+
+  shows.forEach((show) => {
+    container.appendChild(createShowCard(show));
+  });
+}
+
+// === DROPDOWNS ===
+function populateShowList() {
+  const select = document.getElementById("show-list");
+
+  select.innerHTML = `<option value="">All Show</option>`;
+
+  const sorted = [...state.shows].sort((a, b) => a.name.localeCompare(b.name));
+
+  sorted.forEach((show) => {
     const option = document.createElement("option");
-    option.value = code;
-    option.textContent = code;
-
+    option.value = show.name;
+    option.textContent = show.name;
     select.appendChild(option);
   });
 }
 
-// ===> Setup Function;
-function setup() {
-  allEpisodes = getAllEpisodes();
+function populateEpisodeList() {
+  const select = document.getElementById("select");
 
-  populateSelect(); // dropdown
-  render(); // initial render
+  select.innerHTML = `<option value="">All episodes</option>`;
+
+  state.episodes.forEach((ep) => {
+    const code = `S${String(ep.season).padStart(2, "0")}E${String(
+      ep.number,
+    ).padStart(2, "0")}-${ep.name}`;
+
+    const option = document.createElement("option");
+    option.value = code;
+    option.textContent = code;
+    select.appendChild(option);
+  });
 }
 
-window.onload = setup;
-
-// ===> SEARCH EVENT
-searchInput.addEventListener("input", () => {
-  state.searchTerm = searchInput.value;
-  render();
-});
-
-// ===> SELECT EVENT
-select.addEventListener("change", () => {
-  state.selectTerm = select.value;
-  render();
-});
+// === COUNT ===
+function displayCount(filtered, total) {
+  document.getElementById("display").textContent =
+    `Displaying ${filtered} / ${total} episodes`;
+}
