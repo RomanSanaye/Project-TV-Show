@@ -85,14 +85,18 @@ body {
   font-size: 14px;
 }
 
-.search-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--brown);
+#select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
   cursor: pointer;
-  font-size: 18px;
+}
+
+#select:focus {
+  border-color: #3b82f6;
+  outline: none;
 }
 
 #episodes-list {
