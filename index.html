@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TV Show Project | Arunkumar Akilan</title>
+    <title>TV Show Project | Ahmad Roman (RomanSanaye)</title>
 
     <link rel="stylesheet" href="style.css" />
-
+<!-- SHOWS -->
+    <div id="show-container"></div>
     <!-- Font Awesome -->
     <link
       rel="stylesheet"
@@ -19,31 +20,53 @@
       <div id="container">
         <header class="header">
           <h1 class="title">TV Show Episode Guide</h1>
-          <div class="controls">
+          <div class="filters">
             <select id="select"></select>
-            <p id="count"></p>
-          </div>
-          <div class="input-container">
             <input
               type="text"
               id="input-box"
-              placeholder="Search Season / Episode"
+              placeholder="Search shows or episodes"
             />
           </div>
+
+          <div class="info">
+            <p id="show-count"></p>
+            <p id="episode-count"></p>
+            <button id="back-btn" style="display:none;">← Back</button>
+          </div>
         </header>
-
+    
+                  <!-- Episodes-->
         <main id="episodes-list"></main>
+                  <!-- SHOWS -->
+        <div id="show-list"></div>
 
-        <template id="episode-container">
-          <div class="episode-card">
+        <!-- ================= SHOW TEMPLATE -->
+        <template id="show-template">
+          <div class="show-card card">
             <div class="episode-image">
-              <img
-                src="https://placehold.co/400x225/1f2937/ffffff?text=Episode+1"
-              />
+              <img src="" alt="show image" />
             </div>
-            <p class="season-episode">Season 1, Episode 1</p>
+
             <h3 class="episode-title"></h3>
-            <p class="episode-info"></p>
+
+            <p class="episode-info show-summary"></p>
+          </div>
+        </template>
+
+        <!-- ================= EPISODE TEMPLATE -->
+        <template id="episode-template">
+          <div class="episode-card card">
+            <div class="episode-image">
+              <img src="" alt="episode image" />
+            </div>
+
+            <p class="season-episode"></p>
+
+            <h3 class="episode-title"></h3>
+
+            <p class="episode-info episode-summary"></p>
+
             <a href="#" class="read-more">Read more</a>
           </div>
         </template>
@@ -52,14 +75,8 @@
           <p>Made by CYF Trainees</p>
           <p>The data has originally come from "https://tvmaze.com"</p>
         </footer>
+
       </div>
-    </header>
-
-    <!-- SHOWS -->
-    <div id="show-container"></div>
-
-    <!-- EPISODES -->
-    <div id="root" class="container"></div>
 
     <!-- Loads YOUR javascript code -->
     <script src="script.js" defer></script>
