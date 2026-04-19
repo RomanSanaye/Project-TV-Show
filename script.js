@@ -10,8 +10,11 @@ const container = document.getElementById("container");
 let allEpisodes = [];
 
 const state = {
+  shows: [],
+  episodes: [],
   searchTerm: "",
   selectTerm: "",
+  showId: "",
 };
 
 // =================> UI: LOADING
@@ -90,6 +93,61 @@ function renderEpisode(episode) {
     const hidden = summary.classList.toggle("hidden");
     readMore.textContent = hidden ? "Read more" : "Show less";
   });
+}
+
+// === FETCH EPISODES ===
+async function fetchEpisodes(showId) {
+  try {
+    const res = await fetch(`https://api.tvmaze.com/shows/${showId}/episodes`);
+    const data = await res.json();
+
+    state.episodes = data;
+    state.searchTerm = "";
+    state.selectTerm = "";
+
+    populateEpisodeList();
+    render();
+  } catch (e) {
+    console.error("Error loading episodes:", e);
+  }
+}
+
+// === SHOW CARD ===
+function createShowCard(show) {
+  const template = document.getElementById("film-card").content.cloneNode(true);
+
+  const card = template.querySelector(".card");
+
+  card.querySelector("h3").textContent = show.name;
+  card.querySelector("img").src =
+    show.image?.medium || "https://placehold.co/400x225";
+  card.querySelector("p").innerHTML = show.summary || "No summary";
+
+  card.addEventListener("click", () => {
+    state.showId = show.id;
+
+    document.getElementById("show-container").style.display = "none";
+    document.getElementById("root").style.display = "grid";
+
+    fetchEpisodes(show.id);
+  });
+
+  return card;
+}
+
+// === EPISODE CARD ===
+function createEpisodeCard(ep) {
+  const template = document.getElementById("film-card").content.cloneNode(true);
+
+  template.querySelector("h3").textContent =
+    `${ep.name} - S${String(ep.season).padStart(2, "0")}E${String(
+      ep.number,
+    ).padStart(2, "0")}`;
+
+  template.querySelector("img").src =
+    ep.image?.medium || "https://placehold.co/400x225";
+
+  template.querySelector("p").innerHTML = ep.summary || "No summary";
 
   episodeList.appendChild(card);
 }
@@ -99,9 +157,9 @@ function getFilteredEpisodes() {
     const code = formatEpisodeCode(episode);
 
     const searchMatch =
-      episode.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-      (episode.summary &&
-        episode.summary.toLowerCase().includes(state.searchTerm.toLowerCase()));
+      ep.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+      (ep.summary &&
+        ep.summary.toLowerCase().includes(state.searchTerm.toLowerCase()));
 
     const selectMatch = state.selectTerm === "" || state.selectTerm === code;
 
@@ -111,7 +169,8 @@ function getFilteredEpisodes() {
 
 // =================> RENDER ALL
 function render() {
-  episodeList.innerHTML = "";
+  const root = document.getElementById("root");
+  root.innerHTML = "";
 
   const filtered = getFilteredEpisodes();
 
@@ -127,11 +186,18 @@ function populateSelect() {
   allEpisodes.forEach((episode) => {
     const code = formatEpisodeCode(episode);
 
-    const option = document.createElement("option");
-    option.value = code;
-    option.textContent = code;
+  sorted.forEach((show) => {
+    container.appendChild(createShowCard(show));
+  });
+}
 
-    select.appendChild(option);
+// === FILTERED SHOW RENDER ===
+function renderFilteredShows(shows) {
+  const container = document.getElementById("show-container");
+  container.innerHTML = "";
+
+  shows.forEach((show) => {
+    container.appendChild(createShowCard(show));
   });
 }
 
