@@ -1,16 +1,13 @@
 :root {
-  /* modern UI palette */
   --body-bg: #0b0f19;
   --container-bg: #111827;
   --card: #0f172a;
   --text: #e5e7eb;
   --muted: #9ca3af;
 
-  --primary: #4f46e5; /* purple like ChatGPT free offer */
-  --brown: #4b2e1e;
-
+  --primary: #4f46e5;
   --radius: 10px;
-  --gap: 16px;
+  --gap: 12px;
 
   --shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   --font: system-ui, -apple-system, Segoe UI, Roboto, Arial;
@@ -31,197 +28,164 @@ body {
 #root {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 10px;
+  justify-content: center;
 }
 
-#container {
-  width: min(1100px, 100%);
-  background: var(--container-bg);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
+.container {
+  width: min(1200px, 100%);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  flex: 1;
+  background: var(--container-bg);
 }
 
 .header {
   padding: 20px;
-  border-radius: var(--radius);
   background: linear-gradient(135deg, #4b2e1e, #4f46e5);
-  color: white;
+
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
-.title {
-  font-size: clamp(25px, 2vw, 28px);
-  font-weight: 700;
+.header h1 {
+  color: white;
+  margin-bottom: 12px;
 }
 
-.episode-number {
-  margin-top: 6px;
-  font-size: 14px;
-  opacity: 0.9;
+.filter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  align-items: center;
 }
 
-.input-container {
-  position: relative;
-  margin-top: 15px;
-}
-
-#input-box {
+select,
+#search {
   width: 100%;
-  padding: 10px 40px 10px 12px;
+  padding: 10px;
+  border-radius: 8px;
   border: none;
-  border-radius: var(--radius);
   outline: none;
-  background: lightgray;
-  color: var(--card);
-  font-size: 14px;
+  background: #1f2937;
+  color: var(--text);
 }
 
-#select {
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-  background: white;
+#count-result {
+  grid-column: 1 / 2;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#back-btn {
+  grid-column: 2 / 3;
+  justify-self: end;
+  display: none;
+  padding: 8px 12px;
+  background: #4b2e1e;
+  border: none;
+  border-radius: 8px;
+  color: white;
   cursor: pointer;
 }
 
-#select:focus {
-  border-color: #3b82f6;
-  outline: none;
+/* SHOW MODE */
+body.shows-view #episode-list {
+  display: none;
 }
 
-#episodes-list {
-  margin-top: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  align-items: start;
-  gap: var(--gap);
+body.shows-view #back-btn {
+  display: none;
+}
+
+/* EPISODE MODE */
+body.episodes-view #back-btn {
+  display: inline-block;
+}
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+.main-content {
   flex: 1;
-  padding-bottom: 15px;
-  padding-right: 10px;
-  overflow-y: auto;
-  max-height: calc(100vh - 230px);
+  padding: 20px;
 }
 
-#episodes-list::-webkit-scrollbar {
-  width: 8px;
+#show-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
 }
 
-#episodes-list::-webkit-scrollbar-track {
-  background: var(--container-bg);
+#episode-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 }
 
-#episodes-list::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 10px;
+/* =========================
+   SHOW CARD
+========================= */
+.show-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
+.show-card img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+}
+
+.show-card h2 {
+  padding: 10px;
+}
+
+.show-card p {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* =========================
+   EPISODE CARD
+========================= */
 .episode-card {
   background: var(--card);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease;
-  padding-bottom: 10px;
 }
 
-.episode-card:hover {
-  transform: translateY(-6px);
-}
-
-.episode-image img {
+.episode-card img {
   width: 100%;
-  height: 100%;
-  display: block;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  overflow: hidden;
 }
 
-.season-episode {
-  padding: 10px 12px 0;
-  font-size: 10px;
-}
-
-.episode-title {
-  padding: 6px 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.episode-info {
-  margin-top: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.hidden {
-  display: none;
-}
-
-.read-more {
-  margin: 10px 12px 12px;
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: 600;
+.episode-card h3 {
+  padding: 6px;
   font-size: 12px;
 }
 
-.read-more:hover {
-  text-decoration: underline;
-  color: var(--brown);
-}
-
-.footer {
-  margin-top: auto;
-  height: 30px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
+.episode-card p {
+  padding: 0 6px 10px;
+  font-size: 11px;
   color: var(--muted);
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  gap: 5px;
 }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  #container {
-    padding: 15px;
-  }
-
-  #episodes-list {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    max-height: calc(100vh - 260px);
-  }
-
-  .header {
-    padding: 14px;
-  }
-}
-.controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
-
-#select {
-  padding: 8px;
-  border-radius: 6px;
+footer {
+  margin-top: auto;
+  padding: 15px;
+  text-align: center;
+  color: var(--muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
