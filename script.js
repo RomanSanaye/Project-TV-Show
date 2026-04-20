@@ -66,7 +66,7 @@ async function getEpisodes(showId) {
   return data;
 }
 
-// =================> DROPDOWN
+// =================> SHOW DROPDOWN
 function populateShowsDropdown() {
   select.innerHTML = "";
 
@@ -90,7 +90,7 @@ function populateShowsDropdown() {
   select.selectedIndex = 0;
 }
 
-// =================> SHOW CARD
+// =================> CREATE SHOW CARD
 function createShowCard(show) {
   const card = showTemplate.content.cloneNode(true).querySelector(".show-card");
 
@@ -125,7 +125,7 @@ function createShowCard(show) {
   return card;
 }
 
-// =================> EPISODE CARD
+// =================> CREATE EPISODE CARD
 function createEpisodeCard(ep) {
   const card = episodeTemplate.content
     .cloneNode(true)
@@ -208,7 +208,7 @@ function renderEpisodes(list = allEpisodes) {
   showCount.style.display = "none";
 }
 
-// =================> SEARCH (SMART)
+// =================> SEARCH
 function handleSearch() {
   state.searchTerm = searchInput.value;
 
@@ -219,7 +219,7 @@ function handleSearch() {
   }
 }
 
-// =================> SHOW CHANGE (FIXED)
+// =================> SHOW CHANGE
 async function handleShowChange() {
   const showId = select.value;
   if (!showId) return;
@@ -240,7 +240,10 @@ async function handleShowChange() {
   renderEpisodes(allEpisodes);
 }
 
-// =================> BACK BUTTON
+// =================> EVENTS
+searchInput.addEventListener("input", handleSearch);
+select.addEventListener("change", handleShowChange);
+
 backBtn.addEventListener("click", () => {
   state.view = "shows";
   state.searchTerm = "";
@@ -250,10 +253,6 @@ backBtn.addEventListener("click", () => {
 
   renderShows(allShows);
 });
-
-// =================> EVENTS
-searchInput.addEventListener("input", handleSearch);
-select.addEventListener("change", handleShowChange);
 
 // =================> START
 window.onload = fetchShows;
