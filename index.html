@@ -17,7 +17,7 @@
 
   <body>
     <div id="root">
-      <div id="container">
+      <div class="container">
         <header class="header">
           <h1 class="title">TV Show Episode Guide</h1>
           <div class="filters">
@@ -69,16 +69,22 @@
 
             <a href="#" class="read-more">Read more</a>
           </div>
-        </template>
+        </header>
+        <main class="main-content">
+          <!-- SHOWS -->
+          <div id="show-container"></div>
 
-        <footer class="footer">
-          <p>Made by CYF Trainees</p>
-          <p>The data has originally come from "https://tvmaze.com"</p>
+          <!-- Episodes -->
+          <div id="episode-container"></div>
+        </main>
+        <footer>
+          <p>Made BY CYF Trainee</p>
+          <p>The data has originally come from (https://tvmaze.com)</p>
         </footer>
 
       </div>
 
-    <!-- Loads YOUR javascript code -->
-    <script src="script.js" defer></script>
+    <!-- ONLY THIS SCRIPT -->
+    <script src="script.js"></script>
   </body>
 </html>

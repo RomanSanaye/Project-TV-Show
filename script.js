@@ -16,6 +16,20 @@ let allShows = [];
 let allEpisodes = [];
 const episodeCache = {};
 
+const showContainer = document.getElementById("show-container");
+const episodeContainer = document.getElementById("episode-container");
+
+const showSelect = document.getElementById("show-list");
+const episodeSelect = document.getElementById("episode-list");
+
+const search = document.getElementById("search");
+const display = document.getElementById("count-result");
+const backBtn = document.getElementById("back-btn");
+
+// === CACHE ===
+const episodeCache = {};
+
+// === STATE ===
 const state = {
   view: "shows", // "shows" | "episodes"
   searchTerm: "",
@@ -38,7 +52,22 @@ function showError() {
 // =================> FETCH SHOWS
 async function fetchShows() {
   try {
-    showLoading();
+    const res = await fetch("https://api.tvmaze.com/shows");
+    const data = await res.json();
+
+    state.shows = data;
+    populateShowList();
+    updateView();
+    render();
+  } catch (e) {
+    console.error("Error loading shows:", e);
+  }
+
+  // EVENTS
+  search.addEventListener("input", (e) => {
+    state.searchTerm = e.target.value;
+    render();
+  });
 
     const res = await fetch("https://api.tvmaze.com/shows");
     allShows = await res.json();
@@ -151,7 +180,7 @@ function createEpisodeCard(ep) {
 
   const readMore = card.querySelector(".read-more");
 
-  readMore.addEventListener("click", (e) => {
+  readMoreBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
 
