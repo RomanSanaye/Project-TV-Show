@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TV Show Project | Arunkumar Akilan</title>
+    <title>TV Show Project | Ahmad Roman (RomanSanaye)</title>
 
     <link rel="stylesheet" href="style.css" />
-
+<!-- SHOWS -->
+    <div id="show-container"></div>
     <!-- Font Awesome -->
     <link
       rel="stylesheet"
@@ -18,27 +19,55 @@
     <div id="root">
       <div class="container">
         <header class="header">
-          <h1>TV Show Episode</h1>
+          <h1 class="title">TV Show Episode Guide</h1>
+          <div class="filters">
+            <select id="select"></select>
+            <input
+              type="text"
+              id="input-box"
+              placeholder="Search shows or episodes"
+            />
+          </div>
 
-          <div class="filter">
-            <!-- SHOW DROPDOWN -->
-            <select id="show-list">
-              <option value="">All Show</option>
-            </select>
+          <div class="info">
+            <p id="show-count"></p>
+            <p id="episode-count"></p>
+            <button id="back-btn" style="display:none;">← Back</button>
+          </div>
+        </header>
+    
+                  <!-- Episodes-->
+        <main id="episodes-list"></main>
+                  <!-- SHOWS -->
+        <div id="show-list"></div>
 
-            <!-- EPISODE DROPDOWN -->
-            <select id="episode-list">
-              <option value="">All episodes</option>
-            </select>
-
-            <!-- SEARCH -->
-            <div class="search-wrapper">
-              <input type="search" id="search" placeholder="Search episodes" />
+        <!-- ================= SHOW TEMPLATE -->
+        <template id="show-template">
+          <div class="show-card card">
+            <div class="episode-image">
+              <img src="" alt="show image" />
             </div>
 
-            <!-- COUNT -->
-            <p id="count-result"></p>
-            <button id="back-btn">← Back to Shows</button>
+            <h3 class="episode-title"></h3>
+
+            <p class="episode-info show-summary"></p>
+          </div>
+        </template>
+
+        <!-- ================= EPISODE TEMPLATE -->
+        <template id="episode-template">
+          <div class="episode-card card">
+            <div class="episode-image">
+              <img src="" alt="episode image" />
+            </div>
+
+            <p class="season-episode"></p>
+
+            <h3 class="episode-title"></h3>
+
+            <p class="episode-info episode-summary"></p>
+
+            <a href="#" class="read-more">Read more</a>
           </div>
         </header>
         <main class="main-content">
@@ -52,52 +81,8 @@
           <p>Made BY CYF Trainee</p>
           <p>The data has originally come from (https://tvmaze.com)</p>
         </footer>
+
       </div>
-    </div>
-    <!-- SIDE PANEL -->
-    <div id="side-panel" class="side-panel">
-      <div class="side-panel-content">
-        <!-- IMAGE -->
-        <div class="panel-left">
-          <img id="panel-image" />
-        </div>
-
-        <!-- DETAILS -->
-        <div class="panel-right">
-          <button id="close-panel" class="close-btn">✖</button>
-
-          <h2 id="panel-title"></h2>
-
-          <p id="panel-rating"></p>
-          <p id="panel-genres"></p>
-          <p id="panel-runtime"></p>
-          <p id="panel-status"></p>
-
-          <div class="panel-summary">
-            <h3>Summary</h3>
-            <p id="panel-summary-text"></p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SHOW TEMPLATE -->
-    <template id="show-template">
-      <section class="show-card">
-        <img />
-        <h2></h2>
-        <p></p>
-      </section>
-    </template>
-
-    <!-- EPISODE TEMPLATE -->
-    <template id="episode-template">
-      <section class="episode-card">
-        <img />
-        <p></p>
-        <h3></h3>
-      </section>
-    </template>
 
     <!-- ONLY THIS SCRIPT -->
     <script src="script.js"></script>
