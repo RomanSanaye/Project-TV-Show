@@ -47,38 +47,37 @@
 
           <!-- Episodes -->
           <div id="episode-container"></div>
-
-          <!-- SIDE PANEL (HIDDEN DRAWER) -->
-          <div id="side-panel" class="side-panel">
-            <div class="side-panel-content">
-              <!-- Close button -->
-              <button id="close-panel" class="close-btn">✖</button>
-
-              <!-- Image -->
-              <img id="panel-image" />
-
-              <!-- Title -->
-              <h2 id="panel-title"></h2>
-
-              <!-- Rating -->
-              <p id="panel-rating"></p>
-
-              <!-- Genres -->
-              <p id="panel-genres"></p>
-
-              <!-- Runtime -->
-              <p id="panel-runtime"></p>
-
-              <!-- Status -->
-              <p id="panel-status"></p>
-              <div class="panel-summary">
-                <h3>Summary</h3>
-                <p id="panel-summary-text"></p>
-              </div>
-            </div>
-          </div>
         </main>
-        <footer>Made BY CYF Trainee</footer>
+        <footer>
+          <p>Made BY CYF Trainee</p>
+          <p>The data has originally come from (https://tvmaze.com)</p>
+        </footer>
+      </div>
+    </div>
+    <!-- SIDE PANEL -->
+    <div id="side-panel" class="side-panel">
+      <div class="side-panel-content">
+        <!-- IMAGE -->
+        <div class="panel-left">
+          <img id="panel-image" />
+        </div>
+
+        <!-- DETAILS -->
+        <div class="panel-right">
+          <button id="close-panel" class="close-btn">✖</button>
+
+          <h2 id="panel-title"></h2>
+
+          <p id="panel-rating"></p>
+          <p id="panel-genres"></p>
+          <p id="panel-runtime"></p>
+          <p id="panel-status"></p>
+
+          <div class="panel-summary">
+            <h3>Summary</h3>
+            <p id="panel-summary-text"></p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -94,9 +93,9 @@
     <!-- EPISODE TEMPLATE -->
     <template id="episode-template">
       <section class="episode-card">
-        <h3></h3>
         <img />
         <p></p>
+        <h3></h3>
       </section>
     </template>
 

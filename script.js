@@ -110,10 +110,9 @@ async function setup() {
   // 🔥 CLICK OUTSIDE PANEL TO CLOSE
   document.addEventListener("click", (e) => {
     if (!sidePanel.classList.contains("active")) return;
-
-    const clickedInsidePanel = sidePanel.contains(e.target);
-
-    if (!clickedInsidePanel) {
+    const panelContent = sidePanel.querySelector(".side-panel-content");
+    // safer check
+    if (!panelContent.contains(e.target)) {
       closePanelFully();
     }
   });
@@ -184,9 +183,10 @@ function createShowCard(show) {
   readMoreBtn.classList.add("read-more-btn");
 
   readMoreBtn.addEventListener("click", (e) => {
+    e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation(); // 🔥 important fix
 
-    // highlight selected card
     document
       .querySelectorAll(".show-card.active")
       .forEach((c) => c.classList.remove("active"));
@@ -228,13 +228,24 @@ function createEpisodeCard(ep) {
 
   const card = template.querySelector(".episode-card");
 
-  card.querySelector("h3").textContent =
-    `${ep.name} - S${String(ep.season).padStart(2, "0")}E${String(ep.number).padStart(2, "0")}`;
+  const img = card.querySelector("img");
+  img.src = ep.image?.medium || "https://placehold.co/400x225";
 
-  card.querySelector("img").src =
-    ep.image?.medium || "https://placehold.co/400x225";
+  const code = `S${String(ep.season).padStart(2, "0")}E${String(
+    ep.number,
+  ).padStart(2, "0")}`;
 
-  card.querySelector("p").innerHTML = ep.summary || "No summary";
+  const episodeCode = card.querySelector("p");
+  episodeCode.textContent = code;
+
+  const episodeTitle = card.querySelector("h3");
+  episodeTitle.textContent = ep.name;
+
+  const summary = document.createElement("div");
+  summary.classList.add("episode-summary");
+  summary.innerHTML = ep.summary || "No summary";
+
+  card.appendChild(summary);
 
   return card;
 }
