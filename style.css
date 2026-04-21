@@ -13,6 +13,7 @@
   --font: system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }
 
+/* RESET */
 * {
   margin: 0;
   padding: 0;
@@ -25,12 +26,14 @@ body {
   color: var(--text);
 }
 
+/* ROOT */
 #root {
   min-height: 100vh;
   display: flex;
   justify-content: center;
 }
 
+/* MAIN APP WRAPPER */
 .container {
   width: min(1200px, 100%);
   min-height: 100vh;
@@ -39,6 +42,7 @@ body {
   background: var(--container-bg);
 }
 
+/* HEADER */
 .header {
   padding: 20px;
   background: linear-gradient(135deg, #4b2e1e, #4f46e5);
@@ -62,9 +66,9 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--gap);
-  align-items: center;
 }
 
+/* INPUTS */
 select,
 #search {
   width: 100%;
@@ -76,6 +80,7 @@ select,
   color: var(--text);
 }
 
+/* COUNT + BACK */
 #count-result {
   grid-column: 1 / 2;
   font-size: 13px;
@@ -94,28 +99,22 @@ select,
   cursor: pointer;
 }
 
-/* SHOW MODE */
+/* VIEW MODE */
 body.shows-view #episode-list {
   display: none;
 }
 
-body.shows-view #back-btn {
-  display: none;
-}
-
-/* EPISODE MODE */
 body.episodes-view #back-btn {
   display: inline-block;
 }
 
-/* =========================
-   MAIN LAYOUT
-========================= */
+/* MAIN */
 .main-content {
   flex: 1;
   padding: 20px;
 }
 
+/* GRID */
 #show-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -136,28 +135,171 @@ body.episodes-view #back-btn {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
+/* IMAGE */
 .show-card img {
   width: 100%;
   height: 320px;
   object-fit: cover;
 }
 
+/* TITLE */
 .show-card h2 {
   padding: 10px;
 }
 
-.show-card p {
+/* META */
+.card-meta {
+  padding: 0 10px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+/* SUMMARY */
+.card-summary {
+  padding: 0 10px;
+  font-size: 13px;
+  color: #cbd5e1;
+
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
+/* BUTTON */
+.read-more-btn {
+  margin: 10px;
+  padding: 8px 12px;
+
+  background: var(--primary);
+  color: white;
+
+  border: none;
+  border-radius: 6px;
+
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.read-more-btn:hover {
+  opacity: 0.85;
+}
+
 /* =========================
-   EPISODE CARD
+   PANEL
 ========================= */
+.side-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+
+  width: 380px;
+  height: 100vh;
+
+  background: #0f172a;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+
+  z-index: 2000;
+  overflow-y: auto;
+}
+
+.side-panel.active {
+  transform: translateX(0);
+}
+
+/* PANEL CONTENT */
+.side-panel-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* CLOSE BTN */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* IMAGE */
+#panel-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* TEXT */
+#panel-title {
+  font-size: 20px;
+}
+
+#panel-info,
+#panel-genres,
+#panel-runtime,
+#panel-status {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* SUMMARY */
+.panel-summary {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#panel-summary-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* =========================
+   FOCUS MODE (IMPORTANT)
+========================= */
+
+/* dim all cards when panel open */
+body.panel-open .show-card {
+  opacity: 0.3;
+  filter: blur(1px);
+}
+
+/* active card */
+.show-card.active {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.02);
+}
+
+/* blur background */
+body.panel-open .container {
+  body.panel-open .main-content,
+  body.panel-open .header,
+  body.panel-open footer {
+    filter: blur(2px);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+}
+
+/* EPISODES */
 .episode-card {
   background: var(--card);
   border-radius: var(--radius);
@@ -182,6 +324,7 @@ body.episodes-view #back-btn {
   color: var(--muted);
 }
 
+/* FOOTER */
 footer {
   margin-top: auto;
   padding: 15px;

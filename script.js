@@ -1,4 +1,15 @@
 // === GRAB HTML ===
+const sidePanel = document.getElementById("side-panel");
+const closePanelBtn = document.getElementById("close-panel");
+
+const panelImage = document.getElementById("panel-image");
+const panelTitle = document.getElementById("panel-title");
+const panelRating = document.getElementById("panel-rating");
+const panelGenres = document.getElementById("panel-genres");
+const panelRuntime = document.getElementById("panel-runtime");
+const panelStatus = document.getElementById("panel-status");
+const panelSummaryText = document.getElementById("panel-summary-text");
+
 const showContainer = document.getElementById("show-container");
 const episodeContainer = document.getElementById("episode-container");
 
@@ -8,6 +19,9 @@ const episodeSelect = document.getElementById("episode-list");
 const search = document.getElementById("search");
 const display = document.getElementById("count-result");
 const backBtn = document.getElementById("back-btn");
+
+// === CACHE ===
+const episodeCache = {};
 
 // === STATE ===
 const state = {
@@ -19,7 +33,7 @@ const state = {
   view: "shows",
 };
 
-// === SETUP FUNCTION ===
+// === SETUP ===
 window.onload = setup;
 
 async function setup() {
@@ -28,16 +42,14 @@ async function setup() {
     const data = await res.json();
 
     state.shows = data;
-
     populateShowList();
-
     updateView();
     render();
   } catch (e) {
     console.error("Error loading shows:", e);
   }
 
-  // === EVENTS ===
+  // EVENTS
   search.addEventListener("input", (e) => {
     state.searchTerm = e.target.value;
     render();
@@ -49,6 +61,8 @@ async function setup() {
   });
 
   showSelect.addEventListener("change", (e) => {
+    closePanelFully();
+
     const value = e.target.value;
 
     if (value === "") {
@@ -77,6 +91,8 @@ async function setup() {
   });
 
   backBtn.addEventListener("click", () => {
+    closePanelFully();
+
     state.view = "shows";
     state.showId = null;
     state.episodes = [];
@@ -90,15 +106,35 @@ async function setup() {
     updateView();
     render();
   });
+
+  // 🔥 CLICK OUTSIDE PANEL TO CLOSE
+  document.addEventListener("click", (e) => {
+    if (!sidePanel.classList.contains("active")) return;
+
+    const clickedInsidePanel = sidePanel.contains(e.target);
+
+    if (!clickedInsidePanel) {
+      closePanelFully();
+    }
+  });
 }
 
-// === FETCHING EPISODES ===
+// === FETCH EPISODES ===
 async function fetchEpisodes(showId) {
   try {
+    if (episodeCache[showId]) {
+      state.episodes = episodeCache[showId];
+      populateEpisodeList();
+      render();
+      return;
+    }
+
     const res = await fetch(`https://api.tvmaze.com/shows/${showId}/episodes`);
     const data = await res.json();
 
+    episodeCache[showId] = data;
     state.episodes = data;
+
     state.searchTerm = "";
     state.selectedEpisode = "";
 
@@ -109,7 +145,7 @@ async function fetchEpisodes(showId) {
   }
 }
 
-// === CREATING SHOW CARD ===
+// === SHOW CARD ===
 function createShowCard(show) {
   const template = document
     .getElementById("show-template")
@@ -120,9 +156,57 @@ function createShowCard(show) {
   card.querySelector("h2").textContent = show.name;
   card.querySelector("img").src =
     show.image?.medium || "https://placehold.co/400x225";
-  card.querySelector("p").innerHTML = show.summary || "No summary";
 
+  // rating + genres
+  const ratingGenre = document.createElement("p");
+  ratingGenre.classList.add("card-meta");
+  ratingGenre.textContent = `⭐ ${show.rating?.average || "N/A"} | 🎭 ${show.genres?.join(", ") || "N/A"}`;
+
+  // short summary
+  const temp = document.createElement("div");
+  temp.innerHTML = show.summary || "";
+
+  const cleanText = temp.textContent || temp.innerText || "";
+
+  const shortSummary =
+    cleanText.length > 90 ? cleanText.slice(0, 90) + "..." : cleanText;
+
+  const summary = document.createElement("p");
+  summary.classList.add("card-summary");
+  summary.textContent = shortSummary;
+
+  card.appendChild(ratingGenre);
+  card.appendChild(summary);
+
+  // READ MORE BUTTON
+  const readMoreBtn = document.createElement("button");
+  readMoreBtn.textContent = "Read more";
+  readMoreBtn.classList.add("read-more-btn");
+
+  readMoreBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    // highlight selected card
+    document
+      .querySelectorAll(".show-card.active")
+      .forEach((c) => c.classList.remove("active"));
+
+    card.classList.add("active");
+
+    openSidePanel(show);
+  });
+
+  card.appendChild(readMoreBtn);
+
+  // CLICK CARD → EPISODES
   card.addEventListener("click", () => {
+    // 🧠 IF PANEL IS OPEN → CLOSE ONLY
+    if (sidePanel.classList.contains("active")) {
+      closePanelFully();
+      return;
+    }
+
+    // ✅ NORMAL BEHAVIOR
     state.showId = show.id;
     state.view = "episodes";
 
@@ -136,7 +220,7 @@ function createShowCard(show) {
   return card;
 }
 
-// === CREATING EPISODE CARD ===
+// === EPISODE CARD ===
 function createEpisodeCard(ep) {
   const template = document
     .getElementById("episode-template")
@@ -155,7 +239,7 @@ function createEpisodeCard(ep) {
   return card;
 }
 
-// === FILTER EPISODES ===
+// === FILTER ===
 function getFilteredEpisodes() {
   return state.episodes.filter((ep) => {
     const searchMatch =
@@ -174,33 +258,45 @@ function getFilteredEpisodes() {
   });
 }
 
-// === RENDER CONTROLLER ===
+// === RENDER ===
 function render() {
-  if (state.view === "shows") {
-    renderShows();
-  } else {
-    renderEpisodes();
-  }
+  if (state.view === "shows") renderShows();
+  else renderEpisodes();
 }
 
-// === RENDER SHOWS ===
 function renderShows() {
   showContainer.innerHTML = "";
 
-  const filtered = state.shows.filter((show) =>
-    show.name.toLowerCase().includes(state.searchTerm.toLowerCase()),
-  );
+  const term = state.searchTerm.toLowerCase();
+
+  const filtered = state.shows.filter((show) => {
+    const nameMatch = show.name.toLowerCase().includes(term);
+
+    const summaryMatch =
+      show.summary && show.summary.toLowerCase().includes(term);
+
+    const genreMatch =
+      show.genres && show.genres.join(" ").toLowerCase().includes(term);
+
+    return nameMatch || summaryMatch || genreMatch;
+  });
 
   const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+
+  // ✅ NO RESULTS CASE
+  if (sorted.length === 0) {
+    showContainer.innerHTML = `<p>No shows found 😕</p>`;
+    displayCount(0, state.shows.length);
+    return;
+  }
 
   sorted.forEach((show) => {
     showContainer.appendChild(createShowCard(show));
   });
 
-  displayCount(filtered.length, state.shows.length);
+  displayCount(sorted.length, state.shows.length);
 }
 
-// === RENDER EPISODES ===
 function renderEpisodes() {
   episodeContainer.innerHTML = "";
 
@@ -213,7 +309,7 @@ function renderEpisodes() {
   displayCount(filtered.length, state.episodes.length);
 }
 
-// === SHOWS DROPDOWN ===
+// === DROPDOWNS ===
 function populateShowList() {
   showSelect.innerHTML = `<option value="">All Show</option>`;
 
@@ -227,7 +323,6 @@ function populateShowList() {
   });
 }
 
-// === EPISODES DROPDOWN ===
 function populateEpisodeList() {
   episodeSelect.innerHTML = `<option value="">All episodes</option>`;
 
@@ -243,13 +338,13 @@ function populateEpisodeList() {
   });
 }
 
-// === COUNT MESSAGE ===
+// === COUNT ===
 function displayCount(filtered, total) {
   const type = state.view === "shows" ? "shows" : "episodes";
   display.textContent = `Displaying ${filtered} / ${total} ${type}`;
 }
 
-// === VIEW SWITCH ===
+// === VIEW ===
 function updateView() {
   if (state.view === "shows") {
     showContainer.style.display = "grid";
@@ -274,3 +369,36 @@ function updateView() {
   document.body.classList.toggle("episodes-view", state.view === "episodes");
   document.body.classList.toggle("shows-view", state.view === "shows");
 }
+
+// === PANEL ===
+function openSidePanel(show) {
+  panelImage.src = show.image?.medium || "https://placehold.co/400x225";
+  panelTitle.textContent = show.name;
+
+  panelRating.textContent = `⭐ Rating: ${show.rating?.average || "N/A"}`;
+  panelGenres.textContent = `🎭 Genres: ${show.genres.join(", ")}`;
+  panelRuntime.textContent = `⏱ Runtime: ${show.runtime || "N/A"} min`;
+  panelStatus.textContent = `📡 Status: ${show.status}`;
+
+  panelSummaryText.innerHTML = show.summary || "No summary";
+
+  sidePanel.classList.add("active");
+  document.body.classList.add("panel-open");
+}
+
+// === CLOSE PANEL ===
+function closeSidePanel() {
+  sidePanel.classList.remove("active");
+  document.body.classList.remove("panel-open");
+}
+
+function closePanelFully() {
+  closeSidePanel();
+
+  document
+    .querySelectorAll(".show-card.active")
+    .forEach((c) => c.classList.remove("active"));
+}
+
+// === EVENTS ===
+closePanelBtn.addEventListener("click", closePanelFully);
