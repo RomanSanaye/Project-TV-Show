@@ -1,20 +1,14 @@
-// =================> DOM ELEMENTS
-const searchInput = document.getElementById("input-box");
-const episodeList = document.getElementById("episodes-list");
-const select = document.getElementById("select");
-const showList = document.getElementById("show-list");
-const backBtn = document.getElementById("back-btn");
+// === GRAB HTML ===
+const sidePanel = document.getElementById("side-panel");
+const closePanelBtn = document.getElementById("close-panel");
 
-const showCount = document.getElementById("show-count");
-const episodeCount = document.getElementById("episode-count");
-
-const showTemplate = document.getElementById("show-template");
-const episodeTemplate = document.getElementById("episode-template");
-
-// =================> STATE
-let allShows = [];
-let allEpisodes = [];
-const episodeCache = {};
+const panelImage = document.getElementById("panel-image");
+const panelTitle = document.getElementById("panel-title");
+const panelRating = document.getElementById("panel-rating");
+const panelGenres = document.getElementById("panel-genres");
+const panelRuntime = document.getElementById("panel-runtime");
+const panelStatus = document.getElementById("panel-status");
+const panelSummaryText = document.getElementById("panel-summary-text");
 
 const showContainer = document.getElementById("show-container");
 const episodeContainer = document.getElementById("episode-container");
@@ -31,26 +25,18 @@ const episodeCache = {};
 
 // === STATE ===
 const state = {
-  view: "shows", // "shows" | "episodes"
+  shows: [],
+  episodes: [],
   searchTerm: "",
-  showId: "",
+  selectedEpisode: "",
+  showId: null,
+  view: "shows",
 };
 
-// =================> LOADING
-function showLoading() {
-  const loading = document.createElement("h2");
-  loading.id = "loading";
-  loading.textContent = "Loading...";
-  document.getElementById("root").appendChild(loading);
-}
+// === SETUP ===
+window.onload = setup;
 
-// =================> ERROR
-function showError() {
-  document.getElementById("root").innerHTML = "<h2>❌ Failed to load data</h2>";
-}
-
-// =================> FETCH SHOWS
-async function fetchShows() {
+async function setup() {
   try {
     const res = await fetch("https://api.tvmaze.com/shows");
     const data = await res.json();
@@ -69,219 +55,361 @@ async function fetchShows() {
     render();
   });
 
-    const res = await fetch("https://api.tvmaze.com/shows");
-    allShows = await res.json();
+  episodeSelect.addEventListener("change", (e) => {
+    state.selectedEpisode = e.target.value;
+    render();
+  });
 
-    document.getElementById("loading")?.remove();
+  showSelect.addEventListener("change", (e) => {
+    closePanelFully();
 
-    populateShowsDropdown();
+    const value = e.target.value;
+
+    if (value === "") {
+      state.view = "shows";
+      state.showId = null;
+      state.episodes = [];
+      state.searchTerm = "";
+
+      updateView();
+      render();
+      return;
+    }
+
+    const show = state.shows.find((s) => s.name === value);
+
+    if (show) {
+      state.showId = show.id;
+      state.view = "episodes";
+
+      state.searchTerm = "";
+      search.value = "";
+
+      updateView();
+      fetchEpisodes(show.id);
+    }
+  });
+
+  backBtn.addEventListener("click", () => {
+    closePanelFully();
 
     state.view = "shows";
-    renderShows();
-  } catch (err) {
-    console.error(err);
-    showError();
+    state.showId = null;
+    state.episodes = [];
+    state.searchTerm = "";
+    state.selectedEpisode = "";
+
+    showSelect.value = "";
+    episodeSelect.innerHTML = `<option value="">All episodes</option>`;
+    search.value = "";
+
+    updateView();
+    render();
+  });
+
+  // 🔥 CLICK OUTSIDE PANEL TO CLOSE
+  document.addEventListener("click", (e) => {
+    if (!sidePanel.classList.contains("active")) return;
+    const panelContent = sidePanel.querySelector(".side-panel-content");
+    // safer check
+    if (!panelContent.contains(e.target)) {
+      closePanelFully();
+    }
+  });
+}
+
+// === FETCH EPISODES ===
+async function fetchEpisodes(showId) {
+  try {
+    if (episodeCache[showId]) {
+      state.episodes = episodeCache[showId];
+      populateEpisodeList();
+      render();
+      return;
+    }
+
+    const res = await fetch(`https://api.tvmaze.com/shows/${showId}/episodes`);
+    const data = await res.json();
+
+    episodeCache[showId] = data;
+    state.episodes = data;
+
+    state.searchTerm = "";
+    state.selectedEpisode = "";
+
+    populateEpisodeList();
+    render();
+  } catch (e) {
+    console.error("Error loading episodes:", e);
   }
 }
 
-// =================> CACHE EPISODES
-async function getEpisodes(showId) {
-  if (episodeCache[showId]) return episodeCache[showId];
-
-  const res = await fetch(`https://api.tvmaze.com/shows/${showId}/episodes`);
-  const data = await res.json();
-
-  episodeCache[showId] = data;
-  return data;
-}
-
-// =================> SHOW DROPDOWN
-function populateShowsDropdown() {
-  select.innerHTML = "";
-
-  const placeholder = document.createElement("option");
-  placeholder.textContent = "Select a show...";
-  placeholder.disabled = true;
-  placeholder.selected = true;
-  select.appendChild(placeholder);
-
-  const sorted = [...allShows].sort((a, b) =>
-    a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
-  );
-
-  sorted.forEach((show) => {
-    const option = document.createElement("option");
-    option.value = show.id;
-    option.textContent = show.name;
-    select.appendChild(option);
-  });
-
-  select.selectedIndex = 0;
-}
-
-// =================> CREATE SHOW CARD
+// === SHOW CARD ===
 function createShowCard(show) {
-  const card = showTemplate.content.cloneNode(true).querySelector(".show-card");
+  const template = document
+    .getElementById("show-template")
+    .content.cloneNode(true);
 
-  card.querySelector(".episode-title").textContent = show.name;
+  const card = template.querySelector(".show-card");
 
-  // 👉 REMOVE HTML TAGS FROM SUMMARY
-  const rawSummary = show.summary || "No summary available";
-  const cleanSummary = rawSummary.replace(/<[^>]*>/g, "");
-  card.querySelector(".show-summary").textContent = cleanSummary;
-
+  card.querySelector("h2").textContent = show.name;
   card.querySelector("img").src =
-    show.image?.medium ||
-    "https://placehold.co/400x225/1f2937/ffffff?text=No+Image";
+    show.image?.medium || "https://placehold.co/400x225";
 
-  // 👉 CLICK → LOAD EPISODES
-  card.addEventListener("click", async () => {
-    state.view = "episodes";
-    state.showId = show.id;
+  // rating + genres
+  const ratingGenre = document.createElement("p");
+  ratingGenre.classList.add("card-meta");
+  ratingGenre.textContent = `⭐ ${show.rating?.average || "N/A"} | 🎭 ${show.genres?.join(", ") || "N/A"}`;
 
-    showList.style.display = "none";
-    episodeList.style.display = "grid";
-    backBtn.style.display = "block";
+  // short summary
+  const temp = document.createElement("div");
+  temp.innerHTML = show.summary || "";
 
-    allEpisodes = await getEpisodes(show.id);
+  const cleanText = temp.textContent || temp.innerText || "";
 
-    searchInput.value = "";
-    state.searchTerm = "";
+  const shortSummary =
+    cleanText.length > 90 ? cleanText.slice(0, 90) + "..." : cleanText;
 
-    renderEpisodes(allEpisodes);
-  });
+  const summary = document.createElement("p");
+  summary.classList.add("card-summary");
+  summary.textContent = shortSummary;
 
-  return card;
-}
+  card.appendChild(ratingGenre);
+  card.appendChild(summary);
 
-// =================> CREATE EPISODE CARD
-function createEpisodeCard(ep) {
-  const card = episodeTemplate.content
-    .cloneNode(true)
-    .querySelector(".episode-card");
-
-  card.querySelector(".episode-title").textContent = ep.name;
-
-  card.querySelector(".season-episode").textContent =
-    `S${String(ep.season).padStart(2, "0")}E${String(ep.number).padStart(
-      2,
-      "0",
-    )}`;
-
-  card.querySelector("img").src =
-    ep.image?.medium ||
-    "https://placehold.co/400x225/1f2937/ffffff?text=No+Image";
-
-  const summaryEl = card.querySelector(".episode-summary");
-  if (!summaryEl) return card;
-
-  summaryEl.innerHTML = ep.summary || "No summary available";
-  summaryEl.classList.add("hidden");
-
-  const readMore = card.querySelector(".read-more");
+  // READ MORE BUTTON
+  const readMoreBtn = document.createElement("button");
+  readMoreBtn.textContent = "Read more";
+  readMoreBtn.classList.add("read-more-btn");
 
   readMoreBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation(); // 🔥 important fix
 
-    const hidden = summaryEl.classList.toggle("hidden");
-    readMore.textContent = hidden ? "Read more" : "Show less";
+    document
+      .querySelectorAll(".show-card.active")
+      .forEach((c) => c.classList.remove("active"));
+
+    card.classList.add("active");
+
+    openSidePanel(show);
+  });
+
+  card.appendChild(readMoreBtn);
+
+  // CLICK CARD → EPISODES
+  card.addEventListener("click", () => {
+    // 🧠 IF PANEL IS OPEN → CLOSE ONLY
+    if (sidePanel.classList.contains("active")) {
+      closePanelFully();
+      return;
+    }
+
+    // ✅ NORMAL BEHAVIOR
+    state.showId = show.id;
+    state.view = "episodes";
+
+    state.searchTerm = "";
+    search.value = "";
+
+    updateView();
+    fetchEpisodes(show.id);
   });
 
   return card;
 }
 
-// =================> RENDER SHOWS
-function renderShows(list = allShows) {
-  state.view = "shows";
+// === EPISODE CARD ===
+function createEpisodeCard(ep) {
+  const template = document
+    .getElementById("episode-template")
+    .content.cloneNode(true);
 
-  episodeList.innerHTML = "";
-  showList.innerHTML = "";
+  const card = template.querySelector(".episode-card");
 
-  showList.style.display = "grid";
-  episodeList.style.display = "none";
-  backBtn.style.display = "none";
+  const img = card.querySelector("img");
+  img.src = ep.image?.medium || "https://placehold.co/400x225";
 
-  const filtered = list.filter((s) =>
-    s.name.toLowerCase().includes(state.searchTerm.toLowerCase()),
-  );
+  const code = `S${String(ep.season).padStart(2, "0")}E${String(
+    ep.number,
+  ).padStart(2, "0")}`;
 
-  filtered.forEach((show) => {
-    showList.appendChild(createShowCard(show));
-  });
+  const episodeCode = card.querySelector("p");
+  episodeCode.textContent = code;
 
-  showCount.textContent = `Showing ${filtered.length} shows`;
-  showCount.style.display = "block";
-  episodeCount.style.display = "none";
+  const episodeTitle = card.querySelector("h3");
+  episodeTitle.textContent = ep.name;
+
+  const summary = document.createElement("div");
+  summary.classList.add("episode-summary");
+  summary.innerHTML = ep.summary || "No summary";
+
+  card.appendChild(summary);
+
+  return card;
 }
 
-// =================> RENDER EPISODES
-function renderEpisodes(list = allEpisodes) {
-  state.view = "episodes";
-
-  episodeList.innerHTML = "";
-
-  const filtered = list.filter(
-    (ep) =>
+// === FILTER ===
+function getFilteredEpisodes() {
+  return state.episodes.filter((ep) => {
+    const searchMatch =
       ep.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
       (ep.summary &&
-        ep.summary.toLowerCase().includes(state.searchTerm.toLowerCase())),
-  );
+        ep.summary.toLowerCase().includes(state.searchTerm.toLowerCase()));
 
-  filtered.forEach((ep) => {
-    episodeList.appendChild(createEpisodeCard(ep));
+    const code = `S${String(ep.season).padStart(2, "0")}E${String(
+      ep.number,
+    ).padStart(2, "0")}-${ep.name}`;
+
+    const selectMatch =
+      state.selectedEpisode === "" || state.selectedEpisode === code;
+
+    return searchMatch && selectMatch;
+  });
+}
+
+// === RENDER ===
+function render() {
+  if (state.view === "shows") renderShows();
+  else renderEpisodes();
+}
+
+function renderShows() {
+  showContainer.innerHTML = "";
+
+  const term = state.searchTerm.toLowerCase();
+
+  const filtered = state.shows.filter((show) => {
+    const nameMatch = show.name.toLowerCase().includes(term);
+
+    const summaryMatch =
+      show.summary && show.summary.toLowerCase().includes(term);
+
+    const genreMatch =
+      show.genres && show.genres.join(" ").toLowerCase().includes(term);
+
+    return nameMatch || summaryMatch || genreMatch;
   });
 
-  episodeCount.textContent = `Showing ${filtered.length} episodes`;
-  episodeCount.style.display = "block";
-  showCount.style.display = "none";
-}
+  const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 
-// =================> SEARCH
-function handleSearch() {
-  state.searchTerm = searchInput.value;
-
-  if (state.view === "shows") {
-    renderShows(allShows);
-  } else {
-    renderEpisodes(allEpisodes);
+  // ✅ NO RESULTS CASE
+  if (sorted.length === 0) {
+    showContainer.innerHTML = `<p>No shows found 😕</p>`;
+    displayCount(0, state.shows.length);
+    return;
   }
+
+  sorted.forEach((show) => {
+    showContainer.appendChild(createShowCard(show));
+  });
+
+  displayCount(sorted.length, state.shows.length);
 }
 
-// =================> SHOW CHANGE
-async function handleShowChange() {
-  const showId = select.value;
-  if (!showId) return;
+function renderEpisodes() {
+  episodeContainer.innerHTML = "";
 
-  state.showId = showId;
+  const filtered = getFilteredEpisodes();
 
-  searchInput.value = "";
-  state.searchTerm = "";
+  filtered.forEach((ep) => {
+    episodeContainer.appendChild(createEpisodeCard(ep));
+  });
 
-  allEpisodes = await getEpisodes(showId);
-
-  state.view = "episodes";
-
-  showList.style.display = "none";
-  episodeList.style.display = "grid";
-  backBtn.style.display = "block";
-
-  renderEpisodes(allEpisodes);
+  displayCount(filtered.length, state.episodes.length);
 }
 
-// =================> EVENTS
-searchInput.addEventListener("input", handleSearch);
-select.addEventListener("change", handleShowChange);
+// === DROPDOWNS ===
+function populateShowList() {
+  showSelect.innerHTML = `<option value="">All Show</option>`;
 
-backBtn.addEventListener("click", () => {
-  state.view = "shows";
-  state.searchTerm = "";
+  const sorted = [...state.shows].sort((a, b) => a.name.localeCompare(b.name));
 
-  searchInput.value = "";
-  select.selectedIndex = 0;
+  sorted.forEach((show) => {
+    const option = document.createElement("option");
+    option.value = show.name;
+    option.textContent = show.name;
+    showSelect.appendChild(option);
+  });
+}
 
-  renderShows(allShows);
-});
+function populateEpisodeList() {
+  episodeSelect.innerHTML = `<option value="">All episodes</option>`;
 
-// =================> START
-window.onload = fetchShows;
+  state.episodes.forEach((ep) => {
+    const code = `S${String(ep.season).padStart(2, "0")}E${String(
+      ep.number,
+    ).padStart(2, "0")}-${ep.name}`;
+
+    const option = document.createElement("option");
+    option.value = code;
+    option.textContent = code;
+    episodeSelect.appendChild(option);
+  });
+}
+
+// === COUNT ===
+function displayCount(filtered, total) {
+  const type = state.view === "shows" ? "shows" : "episodes";
+  display.textContent = `Displaying ${filtered} / ${total} ${type}`;
+}
+
+// === VIEW ===
+function updateView() {
+  if (state.view === "shows") {
+    showContainer.style.display = "grid";
+    episodeContainer.style.display = "none";
+
+    showSelect.style.display = "inline-block";
+    episodeSelect.style.display = "none";
+
+    search.placeholder = "Search shows...";
+    backBtn.style.display = "none";
+  } else {
+    showContainer.style.display = "none";
+    episodeContainer.style.display = "grid";
+
+    showSelect.style.display = "none";
+    episodeSelect.style.display = "inline-block";
+
+    search.placeholder = "Search episodes...";
+    backBtn.style.display = "inline-block";
+  }
+
+  document.body.classList.toggle("episodes-view", state.view === "episodes");
+  document.body.classList.toggle("shows-view", state.view === "shows");
+}
+
+// === PANEL ===
+function openSidePanel(show) {
+  panelImage.src = show.image?.medium || "https://placehold.co/400x225";
+  panelTitle.textContent = show.name;
+
+  panelRating.textContent = `⭐ Rating: ${show.rating?.average || "N/A"}`;
+  panelGenres.textContent = `🎭 Genres: ${show.genres.join(", ")}`;
+  panelRuntime.textContent = `⏱ Runtime: ${show.runtime || "N/A"} min`;
+  panelStatus.textContent = `📡 Status: ${show.status}`;
+
+  panelSummaryText.innerHTML = show.summary || "No summary";
+
+  sidePanel.classList.add("active");
+  document.body.classList.add("panel-open");
+}
+
+// === CLOSE PANEL ===
+function closeSidePanel() {
+  sidePanel.classList.remove("active");
+  document.body.classList.remove("panel-open");
+}
+
+function closePanelFully() {
+  closeSidePanel();
+
+  document
+    .querySelectorAll(".show-card.active")
+    .forEach((c) => c.classList.remove("active"));
+}
+
+// === EVENTS ===
+closePanelBtn.addEventListener("click", closePanelFully);
